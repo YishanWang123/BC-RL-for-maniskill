@@ -109,7 +109,7 @@ def evaluate(n: int, sample_fn: Callable, eval_envs, device, dtype, transform):
                 ).unsqueeze(1)
             }
 
-            action, _ = sample_fn(input_obs)
+            action= sample_fn(input_obs)
             action = action[:, 0, :].data.cpu().numpy()
             obs, _, _, truncated, info = eval_envs.step(action)
 

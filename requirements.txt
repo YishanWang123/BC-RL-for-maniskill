@@ -1,12 +1,12 @@
-bigym==4.1.0
+# bigym==4.1.0
 dm_env==1.6
 gymnasium==0.29.1
 h5py==3.13.0
-mani_skill==3.0.0b18
-numpy==2.2.4
+# mani_skill==3.0.0b18
+numpy
 PyYAML==6.0.2
 PyYAML==6.0.2
-torch==2.0.0+cu118
-torchvision==0.15.0+cu118
+# torch==2.0.0+cu118
+# torchvision==0.15.0+cu118
 tqdm==4.67.0
 tyro==0.9.17

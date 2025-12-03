@@ -1,4 +1,4 @@
-exp_name: "ACT-Maniskill"
+exp_name: "FM-Maniskill"
 
 # ==========> 环境信息
 envs:
@@ -7,19 +7,12 @@ envs:
 
 # ==========> 模型信息
 chunk_size: 10  # 预测的动作序列长度
-d_model: 512  # 模型的维度, 也就是 query/key/value 映射到做注意力的维度
-d_proprioception: ???
-d_action: ???  # 本体维度和动作维度跟环境有关, 因此这里不填写, 在后面运行代码时填充
-d_z_distribution: 32  # 表征编码器输出的 z 分布的维度
-d_feedforward: 3200  # FFNN 的维度, 一般是 4*d_model 但是 ACT 原始论文用的是 3200
-n_head: 8  # 分头注意力的头数
-n_representation_encoder_layers: 2  # 表征编码器的层数量
-n_encoder_layers: 2  # ACT 编码器的层数量
-n_decoder_layers: 4  # ACT 解码器的层数量
-dropout: 0.1  # 正则化, 丢弃率
-activation: "relu"  # 默认使用 relu 激活函数, 可选的激活函数包括 relu, gelu 和 glu
-normalize_before: false  # 如果是 true, 则在输入模型前额外做一次正则化
-
+d_model: 256  # 模型的维度, 也就是 query/key/value 映射到做注意力的维度
+d_proprioception: 29
+action_dim: 4  # 本体维度和动作维度跟环境有关, 因此这里不填写, 在后面运行代码时填充
+num_steps: 10  # 反向扩散的步数
+hidden_dim: 2048
+hidden_dim_sec: 4096
 # ==========> 视觉骨干
 resnet_name: resnet18
 return_interm_layers: false
@@ -39,7 +32,7 @@ capture_video: true  # 录制视频
 lr: 0.0001  # 模型的学习率
 lr_backbone: 0.00001  # 视觉骨干模型的全参微调学习率
 weight_decay: 0.0001  # 权重衰减
-kl_weight: 1  # kl 散度做梯度下降的优先级
+# kl_weight: 1  # kl 散度做梯度下降的优先级
 
 # ==========> 数据集
 dataset:
@@ -53,7 +46,7 @@ dataset:
 # ==========> 训练记录器
 wandb:
   need: true
-  project_name: "New-ACT-Maniskill"
+  project_name: "New-FM-Maniskill"
 
 # ==========> 其他一些参数
 sim_backend: "physx_cpu"  # 仿真器获取数据的模式, 如果是 'cpu' 则读取到的数据存储于 cpu 中
