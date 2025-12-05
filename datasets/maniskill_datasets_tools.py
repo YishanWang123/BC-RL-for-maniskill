@@ -138,5 +138,5 @@ class IterationBasedBatchSampler(Sampler):
 
 if __name__ == "__main__":
     dtst = load_demo_dataset(
-        "/root/PubData/maniskill/PickCube-v1/trajectory.rgb.pd_ee_delta_pos.physx_cpu.h5")
+        "/root/maniskill/PickCube-v1/trajectory.rgb.pd_ee_delta_pos.physx_cpu.h5")
     print(dtst)

@@ -109,9 +109,11 @@ def evaluate(n: int, sample_fn: Callable, eval_envs, device, dtype, transform):
                 ).unsqueeze(1)
             }
 
-            action= sample_fn(input_obs)
-            action = action[:, 0, :].data.cpu().numpy()
-            obs, _, _, truncated, info = eval_envs.step(action)
+            action_seq= sample_fn(input_obs)
+            action_seq = action_seq[:, :4, :].data.cpu().numpy()
+            for i in range(action_seq.shape[1]):
+                action = action_seq[:, i, :]
+                obs, _, _, truncated, info = eval_envs.step(action)
 
             # note as there are no partial resets, truncated is True for all environments at the same time
             if truncated.any():

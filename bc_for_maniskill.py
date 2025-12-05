@@ -19,7 +19,7 @@ from torch.utils.tensorboard import SummaryWriter
 from env.make_maniskill_envs import make_eval_envs, evaluate
 from datasets.maniskill_datasets import ManiskillDataset
 from datasets.maniskill_datasets_tools import IterationBasedBatchSampler, worker_init_fn
-from network.flow import FlowAgent
+from network.mha_bc import BCAgent
 from util import kl_divergence, save_ckpt
 
 @dataclass
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     )
 
 
-    FlowAgent = FlowAgent(configs).to(device=device, dtype=dtype)
+    FlowAgent = BCAgent(configs).to(device=device, dtype=dtype)
 
     # ==========> 优化器设置
     param_dicts = [

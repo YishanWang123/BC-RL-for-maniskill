@@ -5,21 +5,14 @@ import math
 from network.components.visual_feature_extractor import VisionBackbone, NestedTensor
 
 
-def timestep_embedding(t, dim):
-    half = dim // 2
-    freqs = torch.exp(-torch.arange(half, dtype=t.dtype, device=t.device) * (math.log(10000) / half))
-    args = t * freqs
-    return torch.cat([torch.sin(args), torch.cos(args)], dim=-1)
 
-
-class FlowAgent_MHA(nn.Module):
+class BCAgent(nn.Module):
     """
-    Diffusion Transformer-based Flow Matching policy for visuomotor imitation.
-    Replaces MLP with DiT-style Transformer encoder.
+    Diffusion Transformer-based BC policy for visuomotor imitation.
+    Replaces MLP with Transformer encoder.
     """
     def __init__(self, config):
         super().__init__()
-        self.num_steps = config["num_steps"]
         self.chunk_size = config["chunk_size"]
         self.action_dim = config["action_dim"]
         self.d_model = config["d_model"]
@@ -31,13 +24,9 @@ class FlowAgent_MHA(nn.Module):
 
         # ---- State + time projection ----
         self.state_proj = nn.Linear(config["d_proprioception"], self.d_model)
-        self.time_proj = nn.Sequential(
-            nn.Linear(self.d_model, self.d_model),
-            nn.SiLU(),
-            nn.Linear(self.d_model, self.d_model),
-        )
 
         # ---- Action token projection ----
+        self.fc = nn.Linear(2, self.chunk_size)
         self.action_proj = nn.Linear(self.action_dim, self.d_model)
         self.action_out = nn.Linear(self.d_model, self.action_dim)
 
@@ -54,6 +43,12 @@ class FlowAgent_MHA(nn.Module):
 
         self.layernorm = nn.LayerNorm(self.d_model)
 
+    def action_projection(self, encoded):
+        encoded = encoded.permute(0, 2, 1)
+        x = self.fc(encoded)
+        x = x.permute(0, 2, 1)
+        return x
+
     # ----------------------------- #
     #           Training
     # ----------------------------- #
@@ -65,15 +60,6 @@ class FlowAgent_MHA(nn.Module):
         B = obs["rgb"].shape[0]
         device = obs["rgb"].device
 
-        # ---- Sample time and noise ----
-        t = torch.rand(B, 1, device=device)
-        t_emb = timestep_embedding(t, self.d_model)
-        t_emb = self.time_proj(t_emb)
-
-        noise = torch.randn_like(action)
-        x_t = action * t.view(B, 1, 1) + noise * (1 - t).view(B, 1, 1)
-        u_t = action - noise
-
         # ---- Encode vision ----
         features, _ = self.backbone(NestedTensor(obs["rgb"].squeeze(1), None))
         img_features = features[0].tensors.mean(dim=[2, 3])  # (B, C)
@@ -81,35 +67,38 @@ class FlowAgent_MHA(nn.Module):
 
         # ---- Encode state and time ----
         state_token = self.state_proj(obs["state"]).unsqueeze(1)
-        time_token = t_emb.unsqueeze(1)
-
-        # ---- Project actions into tokens ----
-        act_tokens = self.action_proj(x_t)  # (B, chunk, d_model)
+        # print("state_token shape:", state_token.shape)
+        # print("img_token shape:", img_token.shape)
 
         # ---- Combine all tokens ----
-        tokens = torch.cat([time_token, img_token, state_token, act_tokens], dim=1)
+        tokens = torch.cat([img_token, state_token], dim=1)
         tokens = self.layernorm(tokens)
+        # print("tokens shape:", tokens.shape)
 
         # ---- Run transformer ----
         encoded = self.transformer(tokens)
+        # print("encoded shape:", encoded.shape)
+        encoded = self.action_projection(encoded)
 
         # ---- Take only action token outputs ----
         action_output_tokens = encoded[:, -self.chunk_size:, :]
-        v_t = self.action_out(action_output_tokens)
+        action_pred = self.action_out(action_output_tokens)
+        # print("action_pred shape:", action_pred.shape)
+        # import pdb; pdb.set_trace()
 
         # ---- Compute Flow Matching loss ----
-        loss = F.mse_loss(v_t, u_t)
-        return loss, v_t
+        loss = F.mse_loss(action_pred, action) 
+        return loss, action_pred
 
     # ----------------------------- #
     #           Inference
     # ----------------------------- #
     def get_action(self, obs):
-        """Euler integration through the learned vector field."""
+
         device = obs["rgb"].device
         B = obs["rgb"].shape[0]
-        dt = 1.0 / self.num_steps
-        x_t = torch.randn(B, self.chunk_size, self.action_dim, device=device)
+        # dt = 1.0 / self.num_steps
+        # x_t = torch.randn(B, self.chunk_size, self.action_dim, device=device)
 
         # static encodings
         features, _ = self.backbone(NestedTensor(obs["rgb"].squeeze(1), None))
@@ -117,16 +106,10 @@ class FlowAgent_MHA(nn.Module):
         img_token = self.img_proj(img_features).unsqueeze(1)
         state_token = self.state_proj(obs["state"]).unsqueeze(1)
 
-        for step in range(self.num_steps):
-            t = torch.ones(B, 1, device=device) * (step / self.num_steps)
-            t_emb = timestep_embedding(t, self.d_model)
-            t_emb = self.time_proj(t_emb).unsqueeze(1)
+        tokens = torch.cat([img_token, state_token], dim=1)
+        tokens = self.layernorm(tokens)
+        encoded = self.transformer(tokens)
+        encoded = self.action_projection(encoded)
+        action_pred = self.action_out(encoded[:, -self.chunk_size:, :])
 
-            act_tokens = self.action_proj(x_t)
-            tokens = torch.cat([t_emb, img_token, state_token, act_tokens], dim=1)
-            tokens = self.layernorm(tokens)
-            encoded = self.transformer(tokens)
-            v_t = self.action_out(encoded[:, -self.chunk_size:, :])
-            x_t = x_t + v_t * dt  # Euler update
-
-        return x_t
+        return action_pred

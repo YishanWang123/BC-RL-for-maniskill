@@ -1,4 +1,4 @@
-exp_name: "FM-Maniskill"
+exp_name: "res_mlp-Maniskill"
 
 # ==========> 环境信息
 envs:
@@ -36,7 +36,7 @@ weight_decay: 0.0001  # 权重衰减
 
 # ==========> 数据集
 dataset:
-  path: "/root/PubData/maniskill/PickCube-v1/trajectory.rgb.pd_ee_delta_pos.physx_cpu.h5"
+  path: "/root/maniskill/PickCube-v1/trajectory.rgb.pd_ee_delta_pos.physx_cpu.h5"
   num_traj: 300  # 从数据集中获得演示轨迹的数量
   control_mode: "pd_ee_delta_pos"
   # 控制模式用于设置将模型直接放置于仿真环境的环境类型
@@ -51,3 +51,16 @@ wandb:
 # ==========> 其他一些参数
 sim_backend: "physx_cpu"  # 仿真器获取数据的模式, 如果是 'cpu' 则读取到的数据存储于 cpu 中
 include_depth: false
+
+
+#=========> TD3+BC 相关参数
+updates_per_iter: 1
+# totoal_iters: 1500000
+gamma: 0.99
+policy_noise: 0.2
+noise_clip: 0.5
+policy_delay: 2
+lambda_bc: 2.5
+tau: 0.005
+act_low: -1.0
+act_high: 1.0
