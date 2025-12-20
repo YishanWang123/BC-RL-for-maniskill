@@ -110,7 +110,7 @@ def evaluate(n: int, sample_fn: Callable, eval_envs, device, dtype, transform):
             }
 
             action_seq= sample_fn(input_obs)
-            action_seq = action_seq[:, :4, :].data.cpu().numpy()
+            action_seq = action_seq[:, :5, :].data.cpu().numpy()
             for i in range(action_seq.shape[1]):
                 action = action_seq[:, i, :]
                 obs, _, _, truncated, info = eval_envs.step(action)

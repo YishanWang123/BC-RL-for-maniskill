@@ -1,4 +1,4 @@
-exp_name: "res_mlp-Maniskill"
+exp_name: "s2a_flow-Maniskill"
 
 # ==========> 环境信息
 envs:
@@ -11,8 +11,8 @@ d_model: 256  # 模型的维度, 也就是 query/key/value 映射到做注意力
 d_proprioception: 29
 action_dim: 4  # 本体维度和动作维度跟环境有关, 因此这里不填写, 在后面运行代码时填充
 num_steps: 10  # 反向扩散的步数
-hidden_dim: 2048
-hidden_dim_sec: 4096
+# hidden_dim: 2048
+# hidden_dim_sec: 4096
 # ==========> 视觉骨干
 resnet_name: resnet18
 return_interm_layers: false
