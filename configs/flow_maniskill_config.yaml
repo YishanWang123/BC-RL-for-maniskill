@@ -13,6 +13,7 @@ action_dim: 4  # 本体维度和动作维度跟环境有关, 因此这里不填�
 num_steps: 10  # 反向扩散的步数
 # hidden_dim: 2048
 # hidden_dim_sec: 4096
+t_fixed: 0.9
 # ==========> 视觉骨干
 resnet_name: resnet18
 return_interm_layers: false
