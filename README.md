@@ -2,8 +2,7 @@
 
 <table>
   <tr>
-    <td><img src="assets/8_1.gif" width="256"></td>
-    <td><img src="assets/14.gif" width="256"></td>
+    <td><img src="assets/L1 mha.gif" width="256"></td>
   </tr>
 </table>
 
